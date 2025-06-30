@@ -55,7 +55,7 @@ export default function TelegramMiniApp() {
           isDark ? "bg-gray-800/95 border-gray-700/50" : "bg-white/95 border-gray-200/50"
         }`}
       >
-        <div className="flex justify-around items-center py-2 px-4 max-w-md mx-auto">
+        <div className="flex justify-around items-center py-2 px-4 max-w-md mx-auto gap-2">
           {tabs.map((tab) => {
             const Icon = tab.icon
             const isActive = activeTab === tab.id
@@ -63,16 +63,22 @@ export default function TelegramMiniApp() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex flex-col items-center py-2 px-3 rounded-xl transition-all duration-300 transform ${
+                className={`flex flex-col items-center py-2 px-4 rounded-xl transition-all duration-300 ${
                   isActive
-                    ? "text-[#0088CC] bg-[#0088CC]/10 scale-105"
+                    ? "text-[#0088CC] bg-[#0088CC]/10"
                     : isDark
                       ? "text-gray-400 hover:text-gray-200 hover:bg-gray-700/50"
                       : "text-gray-500 hover:text-gray-700 hover:bg-gray-100/50"
                 }`}
+                style={{
+                  minWidth: '80px', // Фиксированная минимальная ширина
+                  flex: '1 1 0%'    // Равномерное распределение
+                }}
               >
-                <Icon className={`w-6 h-6 mb-1 ${isActive ? "animate-pulse" : ""}`} />
-                <span className="text-xs font-medium">{tab.label}</span>
+                <div className={`w-6 h-6 flex items-center justify-center mb-1 ${isActive ? "animate-pulse" : ""}`}>
+                  <Icon className="w-full h-full" />
+                </div>
+                <span className="text-xs font-medium whitespace-nowrap">{tab.label}</span>
               </button>
             )
           })}

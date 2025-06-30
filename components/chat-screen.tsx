@@ -38,6 +38,7 @@ export default function ChatScreen() {
   const [isLoadingMessages, setIsLoadingMessages] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const isDark = actualTheme === "dark"
   const subscription = useSubscription()
@@ -101,65 +102,73 @@ export default function ChatScreen() {
   }
 
   const sendMessage = async () => {
-    if (subscription?.isExpired) {
-      showError("Доступ ограничен", "Для отправки сообщений необходимо продлить подписку")
-      return
-    }
-
-    if (!inputText.trim() && !selectedFile) return
-
-    const loadingId = showLoading("Отправка сообщения...")
-
-    try {
-      // Симуляция отправки
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      const newMessage: Message = {
-        id: Date.now().toString(),
-        text: inputText || (selectedFile ? `Отправил файл: ${selectedFile.name}` : ""),
-        isUser: true,
-        timestamp: new Date(),
-        file: selectedFile
-          ? {
-              name: selectedFile.name,
-              type: selectedFile.type,
-              size: selectedFile.size,
-              url: URL.createObjectURL(selectedFile),
-            }
-          : undefined,
-      }
-
-      setMessages((prev) => [...prev, newMessage])
-      setInputText("")
-      setSelectedFile(null)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""
-      }
-
-      hideNotification(loadingId)
-      showSuccess("Сообщение отправлено")
-
-      setIsTyping(true)
-
-      // Симуляция ответа AI
-      setTimeout(() => {
-        const aiResponse: Message = {
-          id: (Date.now() + 1).toString(),
-          text: selectedFile
-            ? `Получил ваш файл "${selectedFile.name}". Анализирую содержимое...`
-            : "Отличный вопрос! Давайте разберем это пошагово. Я помогу вам создать детальный план.",
-          isUser: false,
-          timestamp: new Date(),
-          avatar: "🤖",
-        }
-        setMessages((prev) => [...prev, aiResponse])
-        setIsTyping(false)
-      }, 1500)
-    } catch (error) {
-      hideNotification(loadingId)
-      showError("Ошибка отправки", "Не удалось отправить сообщение")
-    }
+  if (subscription?.isExpired) {
+    showError("Доступ ограничен", "Для отправки сообщений необходимо продлить подписку")
+    return
   }
+
+  if (!inputText.trim() && !selectedFile) return
+
+  const loadingId = showLoading("Отправка сообщения...")
+
+  try {
+    // Симуляция отправки
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      text: inputText || (selectedFile ? `Отправил файл: ${selectedFile.name}` : ""),
+      isUser: true,
+      timestamp: new Date(),
+      file: selectedFile
+        ? {
+            name: selectedFile.name,
+            type: selectedFile.type,
+            size: selectedFile.size,
+            url: URL.createObjectURL(selectedFile),
+          }
+        : undefined,
+    }
+
+
+    setMessages((prev) => [...prev, newMessage])
+    setInputText("")
+    setSelectedFile(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+
+    // Сброс высоты textarea
+    const textarea = document.querySelector('textarea') as HTMLTextAreaElement
+    if (textarea) {
+      textarea.style.height = 'auto'
+      textarea.style.height = '44px' // Исходная высота
+    }
+
+    hideNotification(loadingId)
+    showSuccess("Сообщение отправлено")
+
+    setIsTyping(true)
+
+    // Симуляция ответа AI
+    setTimeout(() => {
+      const aiResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        text: selectedFile
+          ? `Получил ваш файл "${selectedFile.name}". Анализирую содержимое...`
+          : "Отличный вопрос! Давайте разберем это пошагово. Я помогу вам создать детальный план.",
+        isUser: false,
+        timestamp: new Date(),
+        avatar: "🤖",
+      }
+      setMessages((prev) => [...prev, aiResponse])
+      setIsTyping(false)
+    }, 1500)
+  } catch (error) {
+    hideNotification(loadingId)
+    showError("Ошибка отправки", "Не удалось отправить сообщение")
+  }
+}
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 Bytes"
@@ -259,11 +268,26 @@ export default function ChatScreen() {
                 className={`flex items-end space-x-2 max-w-[85%] ${message.isUser ? "flex-row-reverse space-x-reverse" : ""}`}
               >
                 {/* Avatar */}
-                {!message.isUser && (
-                  <div className="w-8 h-8 bg-gradient-to-br from-[#0088CC] to-[#34C759] rounded-full flex items-center justify-center text-sm mb-1 shadow-md">
-                    {message.avatar}
-                  </div>
-                )}
+                  {!message.isUser && (
+                    <div 
+                      className="flex-none select-none" 
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        minWidth: '32px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #0088CC, #34C759)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
+                        overflow: 'hidden',
+                        flexShrink: 0
+                      }}
+                    >
+                      <span className="text-sm leading-none">{message.avatar}</span>
+                    </div>
+                  )}
 
                 {/* Message Bubble */}
                 <div
@@ -324,11 +348,26 @@ export default function ChatScreen() {
                 </div>
 
                 {/* User Avatar */}
-                {message.isUser && (
-                  <div className="w-8 h-8 bg-gradient-to-br from-[#FF9500] to-[#34C759] rounded-full flex items-center justify-center text-sm mb-1 shadow-md">
-                    👤
-                  </div>
-                )}
+                  {message.isUser && (
+                    <div 
+                      className="flex-none select-none" 
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        minWidth: '32px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #FF9500, #34C759)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
+                        overflow: 'hidden',
+                        flexShrink: 0
+                      }}
+                    >
+                      <span className="text-sm leading-none">👤</span>
+                    </div>
+                  )}
               </div>
             </div>
           ))
@@ -427,16 +466,24 @@ export default function ChatScreen() {
               >
                 <div className="flex items-end pr-12">
                   <textarea
+                    ref={textareaRef}  // Добавляем ref для управления элементом
                     value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
+                    onChange={(e) => {
+                      setInputText(e.target.value);
+                      // Автоматическое изменение высоты при вводе
+                      if (textareaRef.current) {
+                        textareaRef.current.style.height = 'auto';
+                        textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 128)}px`;
+                      }
+                    }}
                     placeholder={subscription?.isExpired ? "Подписка истекла..." : "Напишите сообщение..."}
                     className={`border-0 bg-transparent rounded-3xl px-4 py-3 resize-none focus:ring-0 focus:outline-none w-full min-h-[44px] max-h-32 theme-transition ${
                       isDark ? "text-gray-100 placeholder-gray-400" : "text-gray-900 placeholder-gray-500"
                     }`}
                     onKeyPress={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault()
-                        sendMessage()
+                        e.preventDefault();
+                        sendMessage();
                       }
                     }}
                     disabled={subscription?.isExpired}
@@ -445,11 +492,7 @@ export default function ChatScreen() {
                       overflow: "hidden",
                       scrollbarWidth: "none",
                       msOverflowStyle: "none",
-                    }}
-                    onInput={(e) => {
-                      const target = e.target as HTMLTextAreaElement
-                      target.style.height = "auto"
-                      target.style.height = Math.min(target.scrollHeight, 128) + "px"
+                      height: "44px", // Добавляем фиксированную начальную высоту
                     }}
                   />
                 </div>
